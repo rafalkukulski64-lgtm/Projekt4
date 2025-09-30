@@ -69,7 +69,7 @@ namespace Projekt4.Migrations
 
                     b.HasIndex("SalaId");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("Projekt4.Models.Room", b =>
@@ -101,7 +101,7 @@ namespace Projekt4.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Projekt4.Models.Reservation", b =>
