@@ -1,0 +1,78 @@
+@model IEnumerable<Projekt4.Models.Room>
+
+@{
+    ViewData["Title"] = "Zarządzanie Salami";
+}
+
+<h1>Zarządzanie Salami</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Dodaj Nową Salę</a>
+</p>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Nazwa)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Pojemność)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Lokalizacja)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Wyposażenie)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.CzyAktywna)
+                </th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Nazwa)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Pojemność)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Lokalizacja)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Wyposażenie)
+                    </td>
+                    <td>
+                        @if (item.CzyAktywna)
+                        {
+                            <span class="badge bg-success">Aktywna</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Nieaktywna</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Edytuj</a>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Szczegóły</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Usuń</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <h4>Brak sal</h4>
+        <p>Nie ma jeszcze żadnych sal w systemie. <a asp-action="Create">Dodaj pierwszą salę</a>.</p>
+    </div>
+}

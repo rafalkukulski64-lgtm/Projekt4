@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,38 +6,36 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Projekt4.Migrations
 {
     /// <inheritdoc />
-    public partial class RemoveValidationConstraints : Migration
+    public partial class NazwyKolumn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
+            migrationBuilder.DropColumn(
+                name: "Cena",
+                table: "Rooms");
+
+            migrationBuilder.DropColumn(
+                name: "Data",
+                table: "Rooms");
+
+            migrationBuilder.RenameColumn(
                 name: "Opis",
                 table: "Rooms",
-                type: "nvarchar(max)",
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(500)",
-                oldMaxLength: 500,
-                oldNullable: true);
+                newName: "Wyposazenie");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Nazwa",
+            migrationBuilder.RenameColumn(
+                name: "Dostepna",
                 table: "Rooms",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(100)",
-                oldMaxLength: 100);
+                newName: "CzyAktywna");
 
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "Data",
+            migrationBuilder.AddColumn<string>(
+                name: "Lokalizacja",
                 table: "Rooms",
-                type: "datetime2",
+                type: "nvarchar(200)",
+                maxLength: 200,
                 nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "datetime2",
-                oldDefaultValueSql: "GETUTCDATE()");
+                defaultValue: "");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Telefon",
@@ -75,38 +73,48 @@ namespace Projekt4.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "datetime2",
                 oldDefaultValueSql: "GETUTCDATE()");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Rooms_Nazwa_Lokalizacja",
+                table: "Rooms",
+                columns: new[] { "Nazwa", "Lokalizacja" },
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "Opis",
-                table: "Rooms",
-                type: "nvarchar(500)",
-                maxLength: 500,
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
-                oldNullable: true);
+            migrationBuilder.DropIndex(
+                name: "IX_Rooms_Nazwa_Lokalizacja",
+                table: "Rooms");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "Nazwa",
+            migrationBuilder.DropColumn(
+                name: "Lokalizacja",
+                table: "Rooms");
+
+            migrationBuilder.RenameColumn(
+                name: "Wyposazenie",
                 table: "Rooms",
-                type: "nvarchar(100)",
-                maxLength: 100,
+                newName: "Opis");
+
+            migrationBuilder.RenameColumn(
+                name: "CzyAktywna",
+                table: "Rooms",
+                newName: "Dostepna");
+
+            migrationBuilder.AddColumn<decimal>(
+                name: "Cena",
+                table: "Rooms",
+                type: "decimal(18,2)",
                 nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
+                defaultValue: 0m);
 
-            migrationBuilder.AlterColumn<DateTime>(
+            migrationBuilder.AddColumn<DateTime>(
                 name: "Data",
                 table: "Rooms",
                 type: "datetime2",
                 nullable: false,
-                defaultValueSql: "GETUTCDATE()",
-                oldClrType: typeof(DateTime),
-                oldType: "datetime2");
+                defaultValueSql: "GETUTCDATE()");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Telefon",

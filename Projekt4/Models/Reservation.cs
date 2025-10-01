@@ -9,7 +9,7 @@ namespace Projekt4.Models
         public string Nazwa { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Telefon { get; set; }
-        public DateTime Start { get; set; }
+        public DateTime Początek { get; set; }
         public DateTime Koniec { get; set; }
         
         [Column(TypeName = "decimal(18,2)")]
@@ -22,6 +22,6 @@ namespace Projekt4.Models
 
         
         [ForeignKey("SalaId")]
-        public virtual Room Sala { get; set; } = null!;
+        public virtual Room Room { get; set; } = null!;
     }
 }

@@ -1,0 +1,104 @@
+@model Projekt4.Models.Room
+
+@{
+    ViewData["Title"] = "Szczegóły Sali";
+}
+
+<h1>Szczegóły Sali</h1>
+
+<div class="card">
+    <div class="card-header">
+        <h4>@Html.DisplayFor(model => model.Nazwa)</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Nazwa)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Nazwa)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Pojemność)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Pojemność) osób
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Lokalizacja)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Lokalizacja)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Wyposażenie)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Wyposażenie)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.CzyAktywna)
+            </dt>
+            <dd class="col-sm-9">
+                @if (Model.CzyAktywna)
+                {
+                    <span class="badge bg-success">Aktywna</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Nieaktywna</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+@if (Model.Reservations != null && Model.Reservations.Any())
+{
+    <div class="mt-4">
+        <h4>Rezerwacje</h4>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Email</th>
+                        <th>Początek</th>
+                        <th>Koniec</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reservation in Model.Reservations.OrderBy(r => r.Początek))
+                    {
+                        <tr>
+                            <td>@reservation.Nazwa</td>
+                            <td>@reservation.Email</td>
+                            <td>@reservation.Początek.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@reservation.Koniec.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                @if (reservation.Anulowana)
+                                {
+                                    <span class="badge bg-danger">Anulowana</span>
+                                }
+                                else if (reservation.Potwierdzona)
+                                {
+                                    <span class="badge bg-success">Potwierdzona</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Oczekuje</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Edytuj</a>
+    <a asp-action="Index" class="btn btn-secondary">Powrót do listy</a>
+</div>

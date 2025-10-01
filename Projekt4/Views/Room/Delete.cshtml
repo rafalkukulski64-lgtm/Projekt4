@@ -1,0 +1,65 @@
+@model Projekt4.Models.Room
+
+@{
+    ViewData["Title"] = "Usuń Salę";
+}
+
+<h1>Usuń Salę</h1>
+
+<div class="alert alert-warning">
+    <h4>Czy na pewno chcesz usunąć tę salę?</h4>
+    <p>Ta operacja jest nieodwracalna.</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4>@Html.DisplayFor(model => model.Nazwa)</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Nazwa)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Nazwa)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Pojemność)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Pojemność) osób
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Lokalizacja)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Lokalizacja)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.Wyposażenie)
+            </dt>
+            <dd class="col-sm-9">
+                @Html.DisplayFor(model => model.Wyposażenie)
+            </dd>
+            <dt class="col-sm-3">
+                @Html.DisplayNameFor(model => model.CzyAktywna)
+            </dt>
+            <dd class="col-sm-9">
+                @if (Model.CzyAktywna)
+                {
+                    <span class="badge bg-success">Aktywna</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Nieaktywna</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+    <input type="submit" value="Usuń Salę" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć tę salę?')" />
+    <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
+</form>

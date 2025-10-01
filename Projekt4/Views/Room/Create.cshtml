@@ -1,0 +1,61 @@
+@model Projekt4.Models.Room
+
+@{
+    ViewData["Title"] = "Dodaj Salę";
+}
+
+<h1>Dodaj Salę</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Nazwa" class="control-label">Nazwa Sali</label>
+                <input asp-for="Nazwa" class="form-control" placeholder="np. Sala Konferencyjna A" />
+                <span asp-validation-for="Nazwa" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Pojemność" class="control-label">Pojemność</label>
+                <input asp-for="Pojemność" class="form-control" type="number" min="1" placeholder="np. 20" />
+                <span asp-validation-for="Pojemność" class="text-danger"></span>
+                <small class="form-text text-muted">Maksymalna liczba osób</small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Lokalizacja" class="control-label">Lokalizacja</label>
+                <input asp-for="Lokalizacja" class="form-control" placeholder="np. Piętro 1, Budynek A" />
+                <span asp-validation-for="Lokalizacja" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Wyposażenie" class="control-label">Wyposażenie</label>
+                <textarea asp-for="Wyposażenie" class="form-control" rows="3" placeholder="np. Projektor, Tablica, Klimatyzacja"></textarea>
+                <span asp-validation-for="Wyposażenie" class="text-danger"></span>
+                <small class="form-text text-muted">Opisz dostępne wyposażenie sali</small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="CzyAktywna" type="checkbox" checked />
+                    <label class="form-check-label" asp-for="CzyAktywna">
+                        Sala aktywna
+                    </label>
+                </div>
+                <span asp-validation-for="CzyAktywna" class="text-danger"></span>
+                <small class="form-text text-muted">Tylko aktywne sale są dostępne do rezerwacji</small>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Dodaj Salę" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Anuluj</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

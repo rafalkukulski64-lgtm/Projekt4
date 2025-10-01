@@ -21,7 +21,9 @@ namespace Projekt4.Data
             modelBuilder.Entity<Room>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Cena).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Nazwa).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Lokalizacja).IsRequired().HasMaxLength(200);
+                entity.HasIndex(e => new { e.Nazwa, e.Lokalizacja }).IsUnique();
             });
 
             // Configure Reservation entity
@@ -31,8 +33,8 @@ namespace Projekt4.Data
                 entity.Property(e => e.Cena).HasColumnType("decimal(18,2)");
 
                 // Configure relationship
-                entity.HasOne(e => e.Sala)
-                      .WithMany(r => r.Rezerwacje)
+                entity.HasOne(e => e.Room)
+                      .WithMany(r => r.Reservations)
                       .HasForeignKey(e => e.SalaId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
