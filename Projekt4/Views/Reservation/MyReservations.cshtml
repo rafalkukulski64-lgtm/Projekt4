@@ -1,0 +1,135 @@
+@model IEnumerable<Projekt4.Models.Reservation>
+
+@{
+    ViewData["Title"] = "Moje rezerwacje";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>@ViewData["Title"]</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nowa rezerwacja
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">Nie masz jeszcze żadnych rezerwacji</h4>
+        <p class="text-muted">Kliknij przycisk "Nowa rezerwacja", aby utworzyć swoją pierwszą rezerwację.</p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Utwórz pierwszą rezerwację
+        </a>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">@Html.DisplayFor(modelItem => item.Tytuł)</h6>
+                        <span class="badge @GetStatusBadgeClass(item.Status)">
+                            @GetStatusDisplayName(item.Status)
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Sala:</strong> @Html.DisplayFor(modelItem => item.Room.Nazwa)<br>
+                            <strong>Lokalizacja:</strong> @Html.DisplayFor(modelItem => item.Room.Lokalizacja)<br>
+                            <strong>Data:</strong> @item.DataRozpoczęcia.ToString("dd.MM.yyyy HH:mm") - @item.DataZakończenia.ToString("dd.MM.yyyy HH:mm")<br>
+                            <strong>Utworzono:</strong> @item.DataUtworzenia.ToString("dd.MM.yyyy HH:mm")
+                        </p>
+                        
+                        @if (!string.IsNullOrEmpty(item.Notatki))
+                        {
+                            <p class="card-text">
+                                <strong>Notatki:</strong> @Html.DisplayFor(modelItem => item.Notatki)
+                            </p>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Szczegóły
+                            </a>
+                            @if (item.Status == Projekt4.Models.ReservationStatus.Pending || item.Status == Projekt4.Models.ReservationStatus.Approved)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal@(item.Id)">
+                                    <i class="fas fa-times"></i> Anuluj
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancel Modal -->
+            <div class="modal fade" id="cancelModal@(item.Id)" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Anulowanie rezerwacji</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Czy na pewno chcesz anulować rezerwację "<strong>@item.Tytuł</strong>"?</p>
+                            <p class="text-muted">Ta operacja nie może zostać cofnięta.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Nie</button>
+                            <form asp-action="Cancel" asp-route-id="@item.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger">Tak, anuluj</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    private string GetStatusDisplayName(Projekt4.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            Projekt4.Models.ReservationStatus.Pending => "Oczekująca",
+            Projekt4.Models.ReservationStatus.Approved => "Zatwierdzona",
+            Projekt4.Models.ReservationStatus.Rejected => "Odrzucona",
+            Projekt4.Models.ReservationStatus.Cancelled => "Anulowana",
+            _ => status.ToString()
+        };
+    }
+
+    private string GetStatusBadgeClass(Projekt4.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            Projekt4.Models.ReservationStatus.Pending => "bg-warning text-dark",
+            Projekt4.Models.ReservationStatus.Approved => "bg-success",
+            Projekt4.Models.ReservationStatus.Rejected => "bg-danger",
+            Projekt4.Models.ReservationStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

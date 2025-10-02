@@ -26,17 +26,30 @@ namespace Projekt4.Data
                 entity.HasIndex(e => new { e.Nazwa, e.Lokalizacja }).IsUnique();
             });
 
-            // Configure Reservation entity
+            
             modelBuilder.Entity<Reservation>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Cena).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Tytuł).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Notatki).HasMaxLength(1000);
+                entity.Property(e => e.UserId).IsRequired();
 
-                // Configure relationship
+                
                 entity.HasOne(e => e.Room)
                       .WithMany(r => r.Reservations)
                       .HasForeignKey(e => e.SalaId)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                
+                entity.HasIndex(e => new { e.SalaId, e.DataRozpoczęcia, e.DataZakończenia });
+                entity.HasIndex(e => e.UserId);
             });
         }
     }

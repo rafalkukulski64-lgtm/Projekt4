@@ -1,0 +1,253 @@
+@model Projekt4.Models.CreateReservationViewModel
+
+@{
+    ViewData["Title"] = "Nowa rezerwacja";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post" id="reservationForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="SalaId" class="control-label"></label>
+                <select asp-for="SalaId" class="form-control" asp-items="@(new SelectList(Model.AvailableRooms, "Id", "Nazwa"))" id="roomSelect">
+                    <option value="">-- Wybierz salę --</option>
+                </select>
+                <span asp-validation-for="SalaId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Tytuł" class="control-label"></label>
+                <input asp-for="Tytuł" class="form-control" />
+                <span asp-validation-for="Tytuł" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="DataRozpoczęcia" class="control-label"></label>
+                        <div class="row">
+                            <div class="col-7">
+                                <input type="date" class="form-control" id="startDatePart" />
+                            </div>
+                            <div class="col-5">
+                                <input type="time" class="form-control" id="startTimePart" step="60" />
+                            </div>
+                        </div>
+                        <input asp-for="DataRozpoczęcia" type="hidden" id="startDate" />
+                        <span asp-validation-for="DataRozpoczęcia" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label asp-for="DataZakończenia" class="control-label"></label>
+                        <div class="row">
+                            <div class="col-7">
+                                <input type="date" class="form-control" id="endDatePart" />
+                            </div>
+                            <div class="col-5">
+                                <input type="time" class="form-control" id="endTimePart" step="60" />
+                            </div>
+                        </div>
+                        <input asp-for="DataZakończenia" type="hidden" id="endDate" />
+                        <span asp-validation-for="DataZakończenia" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Notatki" class="control-label"></label>
+                <textarea asp-for="Notatki" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Notatki" class="text-danger"></span>
+            </div>
+
+            <div id="availabilityCheck" class="alert alert-info" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Sprawdzanie dostępności...
+            </div>
+
+            <div id="availabilityResult" style="display: none;"></div>
+
+            <div class="form-group">
+                <input type="submit" value="Utwórz rezerwację" class="btn btn-primary" id="submitBtn" />
+                <a asp-action="MyReservations" class="btn btn-secondary">Anuluj</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Informacje o sali</h5>
+            </div>
+            <div class="card-body" id="roomInfo">
+                <p class="text-muted">Wybierz salę, aby zobaczyć szczegóły</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            var rooms = @Html.Raw(Json.Serialize(Model.AvailableRooms));
+            
+            $('#roomSelect').change(function() {
+                var roomId = $(this).val();
+                if (roomId) {
+                    var room = rooms.find(r => r.id == roomId);
+                    if (room) {
+                        $('#roomInfo').html(`
+                            <h6>${room.nazwa}</h6>
+                            <p><strong>Lokalizacja:</strong> ${room.lokalizacja}</p>
+                            <p><strong>Pojemność:</strong> ${room.pojemność} osób</p>
+                            ${room.wyposażenie ? `<p><strong>Wyposażenie:</strong> ${room.wyposażenie}</p>` : ''}
+                        `);
+                    }
+                } else {
+                    $('#roomInfo').html('<p class="text-muted">Wybierz salę, aby zobaczyć szczegóły</p>');
+                }
+                checkAvailability();
+            });
+
+            $('#startDate, #endDate').change(function() {
+                checkAvailability();
+            });
+
+            function checkAvailability() {
+                var roomId = $('#roomSelect').val();
+                var startDate = $('#startDate').val();
+                var endDate = $('#endDate').val();
+
+                if (roomId && startDate && endDate) {
+                    $('#availabilityCheck').show();
+                    $('#availabilityResult').hide();
+                    $('#submitBtn').prop('disabled', true);
+
+                    $.get('@Url.Action("CheckAvailability")', {
+                        roomId: roomId,
+                        startDate: startDate,
+                        endDate: endDate
+                    })
+                    .done(function(data) {
+                        $('#availabilityCheck').hide();
+                        
+                        if (data.available) {
+                            $('#availabilityResult').html(`
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> Sala jest dostępna w wybranym terminie
+                                </div>
+                            `).show();
+                            $('#submitBtn').prop('disabled', false);
+                        } else {
+                            $('#availabilityResult').html(`
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Sala jest zajęta w wybranym terminie. Wybierz inny termin.
+                                </div>
+                            `).show();
+                            $('#submitBtn').prop('disabled', true);
+                        }
+                    })
+                    .fail(function() {
+                        $('#availabilityCheck').hide();
+                        $('#availabilityResult').html(`
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Nie można sprawdzić dostępności. Spróbuj ponownie.
+                            </div>
+                        `).show();
+                        $('#submitBtn').prop('disabled', false);
+                    });
+                } else {
+                    $('#availabilityCheck').hide();
+                    $('#availabilityResult').hide();
+                    $('#submitBtn').prop('disabled', false);
+                }
+            }
+
+            var now = new Date();
+            var today = now.toISOString().split('T')[0];
+            var currentTime = now.toTimeString().slice(0, 5);
+            
+            $('#startDatePart, #endDatePart').attr('min', today);
+            
+            $('#startDatePart').on('change', function() {
+                if ($(this).val() === today) {
+                    $('#startTimePart').attr('min', currentTime);
+                } else {
+                    $('#startTimePart').removeAttr('min');
+                }
+            });
+            
+            $('#endDatePart').on('change', function() {
+                if ($(this).val() === today) {
+                    $('#endTimePart').attr('min', currentTime);
+                } else {
+                    $('#endTimePart').removeAttr('min');
+                }
+            });
+
+            // Combine separate date and time fields
+            function updateDateTime(dateField, timeField, hiddenField) {
+                var dateValue = $(dateField).val();
+                var timeValue = $(timeField).val();
+                
+                if (dateValue && timeValue) {
+                    var combined = dateValue + 'T' + timeValue;
+                    $(hiddenField).val(combined);
+                } else {
+                    $(hiddenField).val('');
+                }
+                
+                checkAvailability();
+            }
+            
+            $('#startDatePart, #startTimePart').on('change', function() {
+                updateDateTime('#startDatePart', '#startTimePart', '#startDate');
+            });
+            
+            $('#endDatePart, #endTimePart').on('change', function() {
+                updateDateTime('#endDatePart', '#endTimePart', '#endDate');
+            });
+            
+            var startValue = $('#startDate').val();
+            if (startValue) {
+                var startDate = new Date(startValue);
+                $('#startDatePart').val(startDate.toISOString().split('T')[0]);
+                $('#startTimePart').val(startDate.toTimeString().slice(0, 5));
+            }
+            
+            var endValue = $('#endDate').val();
+            if (endValue) {
+                var endDate = new Date(endValue);
+                $('#endDatePart').val(endDate.toISOString().split('T')[0]);
+                $('#endTimePart').val(endDate.toTimeString().slice(0, 5));
+            }
+
+            $('#startDatePart, #startTimePart').change(function() {
+                var startDateValue = $('#startDatePart').val();
+                var startTimeValue = $('#startTimePart').val();
+                var endDateValue = $('#endDatePart').val();
+                var endTimeValue = $('#endTimePart').val();
+                
+                if (startDateValue && startTimeValue) {
+                    var startDateTime = new Date(startDateValue + 'T' + startTimeValue);
+                    
+                    if (endDateValue && endTimeValue) {
+                        var endDateTime = new Date(endDateValue + 'T' + endTimeValue);
+                        
+                        if (endDateTime <= startDateTime) {
+                            startDateTime.setHours(startDateTime.getHours() + 1);
+                            $('#endDatePart').val(startDateTime.toISOString().split('T')[0]);
+                            $('#endTimePart').val(startDateTime.toTimeString().slice(0, 5));
+                            updateDateTime('#endDatePart', '#endTimePart', '#endDate');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

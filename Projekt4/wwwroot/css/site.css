@@ -20,3 +20,51 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Hide seconds in datetime-local inputs */
+input[type="datetime-local"]::-webkit-datetime-edit-second-field,
+input[type="datetime-local"]::-webkit-datetime-edit-millisecond-field {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide seconds in time picker dropdown */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator ~ *::-webkit-datetime-edit-second-field,
+input[type="datetime-local"]::-webkit-inner-spin-button ~ *::-webkit-datetime-edit-second-field {
+  display: none !important;
+}
+
+/* Additional hiding for Chrome/Edge */
+input[type="datetime-local"]::-webkit-datetime-edit-text {
+  color: transparent;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+  color: black;
+}
+
+input[type="datetime-local"] {
+  position: relative;
+}
+
+/* Firefox fallback */
+@-moz-document url-prefix() {
+  input[type="datetime-local"] {
+    width: 200px;
+  }
+}
+
+/* Hide seconds in any time picker */
+::-webkit-datetime-edit-second-field {
+  display: none !important;
+}
+
+::-webkit-datetime-edit-millisecond-field {
+  display: none !important;
+}

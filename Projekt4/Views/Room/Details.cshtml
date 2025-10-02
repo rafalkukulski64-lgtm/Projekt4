@@ -69,26 +69,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var reservation in Model.Reservations.OrderBy(r => r.Początek))
+                    @foreach (var reservation in Model.Reservations.OrderBy(r => r.DataRozpoczęcia))
                     {
                         <tr>
-                            <td>@reservation.Nazwa</td>
+                            <td>@reservation.Tytuł</td>
                             <td>@reservation.Email</td>
-                            <td>@reservation.Początek.ToString("dd.MM.yyyy HH:mm")</td>
-                            <td>@reservation.Koniec.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@reservation.DataRozpoczęcia.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@reservation.DataZakończenia.ToString("dd.MM.yyyy HH:mm")</td>
                             <td>
-                                @if (reservation.Anulowana)
-                                {
-                                    <span class="badge bg-danger">Anulowana</span>
+                                @{
+                                    var statusClass = reservation.Status switch
+                                    {
+                                        Projekt4.Models.ReservationStatus.Pending => "bg-warning text-dark",
+                                        Projekt4.Models.ReservationStatus.Approved => "bg-success",
+                                        Projekt4.Models.ReservationStatus.Rejected => "bg-danger",
+                                        Projekt4.Models.ReservationStatus.Cancelled => "bg-secondary",
+                                        _ => "bg-secondary"
+                                    };
+                                    var statusText = reservation.Status switch
+                                    {
+                                        Projekt4.Models.ReservationStatus.Pending => "Oczekująca",
+                                        Projekt4.Models.ReservationStatus.Approved => "Zatwierdzona",
+                                        Projekt4.Models.ReservationStatus.Rejected => "Odrzucona",
+                                        Projekt4.Models.ReservationStatus.Cancelled => "Anulowana",
+                                        _ => reservation.Status.ToString()
+                                    };
                                 }
-                                else if (reservation.Potwierdzona)
-                                {
-                                    <span class="badge bg-success">Potwierdzona</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning">Oczekuje</span>
-                                }
+                                <span class="badge @statusClass">@statusText</span>
                             </td>
                         </tr>
                     }

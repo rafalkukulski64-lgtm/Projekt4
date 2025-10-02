@@ -1,0 +1,253 @@
+@model IEnumerable<Projekt4.Models.Reservation>
+
+@{
+    ViewData["Title"] = "Wszystkie rezerwacje";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>@ViewData["Title"]</h2>
+    <div>
+        <span class="badge bg-info">@Model.Count() rezerwacji</span>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-filter"></i> Filtry
+            <button class="btn btn-sm btn-outline-secondary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </h6>
+    </div>
+    <div class="collapse show" id="filtersCollapse">
+        <div class="card-body">
+            <form method="get" asp-action="AllReservations">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="roomId">Sala:</label>
+                            <select name="roomId" id="roomId" class="form-control" asp-items="ViewBag.Rooms">
+                                <option value="">-- Wszystkie sale --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="startDate">Od daty:</label>
+                            <input type="date" name="startDate" id="startDate" class="form-control" value="@ViewBag.CurrentStartDate" />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="endDate">Do daty:</label>
+                            <input type="date" name="endDate" id="endDate" class="form-control" value="@ViewBag.CurrentEndDate" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="status">Status:</label>
+                            <select name="status" id="status" class="form-control" asp-items="ViewBag.Statuses">
+                                <option value="">-- Wszystkie statusy --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Filtruj
+                                </button>
+                                <a asp-action="AllReservations" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Wyczyść
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">Brak rezerwacji</h4>
+        <p class="text-muted">Nie znaleziono rezerwacji spełniających kryteria wyszukiwania.</p>
+    </div>
+}
+else
+{
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Pending)</h5>
+                    <p class="card-text">Oczekujące</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Approved)</h5>
+                    <p class="card-text">Zatwierdzone</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Rejected)</h5>
+                    <p class="card-text">Odrzucone</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Cancelled)</h5>
+                    <p class="card-text">Anulowane</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservations Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tytuł</th>
+                            <th>Sala</th>
+                            <th>Użytkownik</th>
+                            <th>Data rozpoczęcia</th>
+                            <th>Data zakończenia</th>
+                            <th>Status</th>
+                            <th>Utworzono</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@Html.DisplayFor(modelItem => item.Tytuł)</strong>
+                                    @if (!string.IsNullOrEmpty(item.Notatki))
+                                    {
+                                        <br><small class="text-muted">@item.Notatki.Substring(0, Math.Min(50, item.Notatki.Length))@(item.Notatki.Length > 50 ? "..." : "")</small>
+                                    }
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Room.Nazwa)
+                                    <br><small class="text-muted">@Html.DisplayFor(modelItem => item.Room.Lokalizacja)</small>
+                                </td>
+                                <td>@Html.DisplayFor(modelItem => item.User.Email)</td>
+                                <td>@item.DataRozpoczęcia.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.DataZakończenia.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">
+                                        @GetStatusDisplayName(item.Status)
+                                    </span>
+                                </td>
+                                <td>@item.DataUtworzenia.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if (item.Status == Projekt4.Models.ReservationStatus.Pending)
+                                        {
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <form asp-action="UpdateStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="status" value="@((int)Projekt4.Models.ReservationStatus.Approved)" />
+                                                            <button type="submit" class="dropdown-item text-success">
+                                                                <i class="fas fa-check"></i> Zatwierdź
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form asp-action="UpdateStatus" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="status" value="@((int)Projekt4.Models.ReservationStatus.Rejected)" />
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="fas fa-times"></i> Odrzuć
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    private string GetStatusDisplayName(Projekt4.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            Projekt4.Models.ReservationStatus.Pending => "Oczekująca",
+            Projekt4.Models.ReservationStatus.Approved => "Zatwierdzona",
+            Projekt4.Models.ReservationStatus.Rejected => "Odrzucona",
+            Projekt4.Models.ReservationStatus.Cancelled => "Anulowana",
+            _ => status.ToString()
+        };
+    }
+
+    private string GetStatusBadgeClass(Projekt4.Models.ReservationStatus status)
+    {
+        return status switch
+        {
+            Projekt4.Models.ReservationStatus.Pending => "bg-warning text-dark",
+            Projekt4.Models.ReservationStatus.Approved => "bg-success",
+            Projekt4.Models.ReservationStatus.Rejected => "bg-danger",
+            Projekt4.Models.ReservationStatus.Cancelled => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-submit form when filters change
+            $('#roomId, #status').change(function() {
+                $(this).closest('form').submit();
+            });
+            
+            // Set current values for select elements
+            $('#roomId').val('@ViewBag.CurrentRoomId');
+            $('#status').val('@ViewBag.CurrentStatus');
+        });
+    </script>
+}
