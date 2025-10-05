@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Projekt4.Migrations
 {
     /// <inheritdoc />
-    public partial class PolskieZnakiDiakrytyczne : Migration
+    public partial class RenameDiacriticsColumns : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

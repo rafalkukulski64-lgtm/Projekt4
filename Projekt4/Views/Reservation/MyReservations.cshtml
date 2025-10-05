@@ -77,12 +77,21 @@ else
                                     <i class="fas fa-times"></i> Anuluj
                                 </button>
                             }
+                            @if (item.Status == Projekt4.Models.ReservationStatus.Cancelled)
+                            {
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Czy na pewno chcesz usunąć anulowaną rezerwację?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i> Usuń
+                                    </button>
+                                </form>
+                            }
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Cancel Modal -->
+            
             <div class="modal fade" id="cancelModal@(item.Id)" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">

@@ -90,42 +90,6 @@
 }
 else
 {
-    <!-- Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-warning">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Pending)</h5>
-                    <p class="card-text">Oczekujące</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-success">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Approved)</h5>
-                    <p class="card-text">Zatwierdzone</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-danger">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Rejected)</h5>
-                    <p class="card-text">Odrzucone</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-secondary">@Model.Count(r => r.Status == Projekt4.Models.ReservationStatus.Cancelled)</h5>
-                    <p class="card-text">Anulowane</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Reservations Table -->
     <div class="card">
         <div class="card-body">
@@ -172,6 +136,15 @@ else
                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        @if (item.Status == Projekt4.Models.ReservationStatus.Cancelled)
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Usuń" onclick="return confirm('Usunąć anulowaną rezerwację?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
                                         @if (item.Status == Projekt4.Models.ReservationStatus.Pending)
                                         {
                                             <div class="btn-group" role="group">

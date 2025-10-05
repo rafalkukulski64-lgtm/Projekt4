@@ -20,7 +20,7 @@ namespace Projekt4.Controllers
             _userManager = userManager;
         }
 
-        // GET: Reservation/Create
+        
         public async Task<IActionResult> Create()
         {
             var viewModel = new CreateReservationViewModel
@@ -34,18 +34,18 @@ namespace Projekt4.Controllers
             return View(viewModel);
         }
 
-        // POST: Reservation/Create
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateReservationViewModel viewModel)
         {
-            // Reload available rooms for the view
+            
             viewModel.AvailableRooms = await _context.Rooms
                 .Where(r => r.CzyAktywna)
                 .OrderBy(r => r.Nazwa)
                 .ToListAsync();
 
-            // Custom validation
+            
             if (viewModel.DataRozpoczęcia >= viewModel.DataZakończenia)
             {
                 ModelState.AddModelError("DataZakończenia", "Data zakończenia musi być późniejsza niż data rozpoczęcia.");
@@ -58,7 +58,7 @@ namespace Projekt4.Controllers
 
             if (ModelState.IsValid)
             {
-                // Check for conflicts
+                
                 var hasConflict = await _context.Reservations
                     .Where(r => r.SalaId == viewModel.SalaId &&
                                r.Status != ReservationStatus.Rejected &&
@@ -100,7 +100,7 @@ namespace Projekt4.Controllers
             return View(viewModel);
         }
 
-        // GET: Reservation/MyReservations
+        
         public async Task<IActionResult> MyReservations()
         {
             var userId = _userManager.GetUserId(User);
@@ -118,7 +118,7 @@ namespace Projekt4.Controllers
             return View(reservations);
         }
 
-        // GET: Reservation/Details/5
+        
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -139,7 +139,7 @@ namespace Projekt4.Controllers
             var userId = _userManager.GetUserId(User);
             var isManager = User.IsInRole("Manager");
 
-            // Check if user can view this reservation
+            
             if (!isManager && reservation.UserId != userId)
             {
                 return Forbid();
@@ -148,7 +148,7 @@ namespace Projekt4.Controllers
             return View(reservation);
         }
 
-        // GET: Reservation/AllReservations (Manager only)
+        
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> AllReservations(int? roomId, DateTime? startDate, DateTime? endDate, ReservationStatus? status)
         {
@@ -157,7 +157,7 @@ namespace Projekt4.Controllers
                 .Include(r => r.User)
                 .AsQueryable();
 
-            // Apply filters
+            
             if (roomId.HasValue)
             {
                 query = query.Where(r => r.SalaId == roomId.Value);
@@ -182,7 +182,7 @@ namespace Projekt4.Controllers
                 .OrderByDescending(r => r.DataUtworzenia)
                 .ToListAsync();
 
-            // Prepare filter data for the view
+            
             ViewBag.Rooms = new SelectList(await _context.Rooms.OrderBy(r => r.Nazwa).ToListAsync(), "Id", "Nazwa", roomId);
             ViewBag.Statuses = new SelectList(Enum.GetValues(typeof(ReservationStatus)).Cast<ReservationStatus>()
                 .Select(s => new { Value = (int)s, Text = GetStatusDisplayName(s) }), "Value", "Text", (int?)status);
@@ -194,7 +194,7 @@ namespace Projekt4.Controllers
             return View(reservations);
         }
 
-        // POST: Reservation/UpdateStatus/5 (Manager only)
+        
         [HttpPost]
         [Authorize(Roles = "Manager")]
         [ValidateAntiForgeryToken]
@@ -206,14 +206,56 @@ namespace Projekt4.Controllers
                 return NotFound();
             }
 
-            reservation.Status = status;
-            await _context.SaveChangesAsync();
+            
+            if ((status == ReservationStatus.Approved || status == ReservationStatus.Rejected) && reservation.Status != ReservationStatus.Pending)
+            {
+                TempData["ErrorMessage"] = "Tę rezerwację można zatwierdzić/odrzucić tylko w statusie Oczekująca.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            if (status == ReservationStatus.Approved)
+            {
+                
+                await using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+                var hasConflict = await _context.Reservations
+                    .Where(r => r.SalaId == reservation.SalaId && r.Id != reservation.Id &&
+                                r.Status != ReservationStatus.Rejected &&
+                                r.Status != ReservationStatus.Cancelled &&
+                                (r.DataRozpoczęcia < reservation.DataZakończenia && r.DataZakończenia > reservation.DataRozpoczęcia))
+                    .AnyAsync();
+
+                if (hasConflict)
+                {
+                    TempData["ErrorMessage"] = "Zatwierdzenie nie jest możliwe – wykryto kolizję terminu.";
+                    await tx.RollbackAsync();
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                reservation.Status = ReservationStatus.Approved;
+                reservation.DataAktualizacji = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            else if (status == ReservationStatus.Rejected)
+            {
+                reservation.Status = ReservationStatus.Rejected;
+                reservation.DataAktualizacji = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                
+                reservation.Status = status;
+                reservation.DataAktualizacji = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
 
             TempData["SuccessMessage"] = $"Status rezerwacji został zmieniony na: {GetStatusDisplayName(status)}";
-            return RedirectToAction(nameof(Details), new { id = id });
+            return RedirectToAction(nameof(Details), new { id });
         }
 
-        // POST: Reservation/Cancel/5
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -227,13 +269,13 @@ namespace Projekt4.Controllers
             var userId = _userManager.GetUserId(User);
             var isManager = User.IsInRole("Manager");
 
-            // Check if user can cancel this reservation
+            
             if (!isManager && reservation.UserId != userId)
             {
                 return Forbid();
             }
 
-            // Only allow cancellation of pending or approved reservations
+            
             if (reservation.Status != ReservationStatus.Pending && reservation.Status != ReservationStatus.Approved)
             {
                 TempData["ErrorMessage"] = "Nie można anulować tej rezerwacji.";
@@ -247,7 +289,7 @@ namespace Projekt4.Controllers
             return RedirectToAction(nameof(MyReservations));
         }
 
-        // Helper method to get display name for status
+        
         private string GetStatusDisplayName(ReservationStatus status)
         {
             return status switch
@@ -260,7 +302,7 @@ namespace Projekt4.Controllers
             };
         }
 
-        // API endpoint to check room availability
+        
         [HttpGet]
         public async Task<IActionResult> CheckAvailability(int roomId, DateTime startDate, DateTime endDate)
         {
@@ -272,6 +314,54 @@ namespace Projekt4.Controllers
                 .AnyAsync();
 
             return Json(new { available = !hasConflict });
+        }
+
+        
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var reservation = await _context.Reservations.FindAsync(id);
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var isManager = User.IsInRole("Manager");
+
+            
+            if (!isManager && reservation.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            
+            if (reservation.Status != ReservationStatus.Cancelled)
+            {
+                TempData["ErrorMessage"] = "Usuwanie możliwe tylko dla rezerwacji w statusie Anulowana.";
+                if (isManager)
+                {
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                else
+                {
+                    return RedirectToAction(nameof(MyReservations));
+                }
+            }
+
+            _context.Reservations.Remove(reservation);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Rezerwacja została usunięta.";
+            if (isManager)
+            {
+                return RedirectToAction(nameof(AllReservations));
+            }
+            else
+            {
+                return RedirectToAction(nameof(MyReservations));
+            }
         }
     }
 }

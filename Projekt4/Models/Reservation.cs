@@ -38,6 +38,9 @@ namespace Projekt4.Models
         [Display(Name = "Data utworzenia")]
         public DateTime DataUtworzenia { get; set; } = DateTime.UtcNow;
         
+        [Display(Name = "Data aktualizacji")]
+        public DateTime? DataAktualizacji { get; set; }
+        
         
         [ForeignKey("SalaId")]
         public virtual Room Room { get; set; } = null!;

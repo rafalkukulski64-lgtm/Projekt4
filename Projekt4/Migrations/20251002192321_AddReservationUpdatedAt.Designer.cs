@@ -12,8 +12,8 @@ using Projekt4.Data;
 namespace Projekt4.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251001074246_PolskieZnakiDiakrytyczne")]
-    partial class PolskieZnakiDiakrytyczne
+    [Migration("20251002192321_AddReservationUpdatedAt")]
+    partial class AddReservationUpdatedAt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -244,6 +244,18 @@ namespace Projekt4.Migrations
                     b.Property<DateTime>("Data")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DataAktualizacji")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DataRozpoczęcia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DataUtworzenia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DataZakończenia")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -255,6 +267,10 @@ namespace Projekt4.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Notatki")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<DateTime>("Początek")
                         .HasColumnType("datetime2");
 
@@ -264,15 +280,29 @@ namespace Projekt4.Migrations
                     b.Property<int>("SalaId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<string>("Telefon")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tytuł")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Uwagi")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SalaId");
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("SalaId", "DataRozpoczęcia", "DataZakończenia");
 
                     b.ToTable("Reservations");
                 });
@@ -372,7 +402,15 @@ namespace Projekt4.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Room");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Projekt4.Models.Room", b =>
