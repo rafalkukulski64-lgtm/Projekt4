@@ -150,7 +150,7 @@ namespace Projekt4.Controllers
 
         
         [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> AllReservations(int? roomId, DateTime? startDate, DateTime? endDate, ReservationStatus? status)
+        public async Task<IActionResult> AllReservations(int? roomId, DateTime? startDate, DateTime? endDate, ReservationStatus? status, string? title)
         {
             var query = _context.Reservations
                 .Include(r => r.Room)
@@ -178,6 +178,11 @@ namespace Projekt4.Controllers
                 query = query.Where(r => r.Status == status.Value);
             }
 
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                query = query.Where(r => r.Tytuł.Contains(title));
+            }
+
             var reservations = await query
                 .OrderByDescending(r => r.DataUtworzenia)
                 .ToListAsync();
@@ -190,6 +195,7 @@ namespace Projekt4.Controllers
             ViewBag.CurrentStartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.CurrentEndDate = endDate?.ToString("yyyy-MM-dd");
             ViewBag.CurrentStatus = status;
+            ViewBag.CurrentTitle = title;
 
             return View(reservations);
         }

@@ -35,6 +35,12 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
+                            <label for="title">Tytuł:</label>
+                            <input type="text" name="title" id="title" class="form-control" value="@ViewBag.CurrentTitle" placeholder="Szukaj po tytule" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
                             <label for="roomId">Sala:</label>
                             <select name="roomId" id="roomId" class="form-control" asp-items="ViewBag.Rooms">
                                 <option value="">-- Wszystkie sale --</option>
@@ -221,6 +227,7 @@ else
             // Set current values for select elements
             $('#roomId').val('@ViewBag.CurrentRoomId');
             $('#status').val('@ViewBag.CurrentStatus');
+            $('#title').val('@ViewBag.CurrentTitle');
         });
     </script>
 }

@@ -1,0 +1,167 @@
+@model Projekt4.Models.CalendarViewModel
+
+@{
+    ViewData["Title"] = $"Kalendarz: {Model.Room.Nazwa}";
+    var days = new List<DateTime>();
+    if (Model.ViewMode == "month")
+    {
+        var d = new DateTime(Model.StartDate.Year, Model.StartDate.Month, 1);
+        var end = new DateTime(Model.EndDate.Year, Model.EndDate.Month, Model.EndDate.Day);
+        while (d <= end)
+        {
+            days.Add(d);
+            d = d.AddDays(1);
+        }
+    }
+    else
+    {
+        var d = Model.StartDate.Date;
+        while (d <= Model.EndDate.Date)
+        {
+            days.Add(d);
+            d = d.AddDays(1);
+        }
+    }
+    string DayLabel(DateTime dt) => dt.ToString("dd.MM (ddd)");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@ViewData["Title"]</h2>
+    <div>
+        <a asp-action="Details" asp-route-id="@Model.Room.Id" class="btn btn-secondary">Powrót</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Calendar" asp-route-id="@Model.Room.Id" class="row g-2 align-items-end">
+            <div class="col-sm-3">
+                <label for="start" class="form-label">Data bazowa</label>
+                <input type="date" id="start" name="start" class="form-control" value="@ViewBag.BaseDate" />
+            </div>
+            <div class="col-sm-3">
+                <label for="mode" class="form-label">Tryb widoku</label>
+                <select id="mode" name="mode" class="form-select">
+                    <option value="week" selected="@(Model.ViewMode=="week" ? "selected" : null)">Tydzień</option>
+                    <option value="month" selected="@(Model.ViewMode=="month" ? "selected" : null)">Miesiąc</option>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary">Pokaż</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.ViewMode == "week")
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 90px;">Godzina</th>
+                    @foreach (var day in days)
+                    {
+                        <th class="text-center">@DayLabel(day)</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (int h = 8; h <= 20; h++)
+                {
+                    <tr>
+                        <th>@(h.ToString("D2")):00</th>
+                        @foreach (var day in days)
+                        {
+                            var hourStart = day.Date.AddHours(h);
+                            var hourEnd = hourStart.AddHours(1);
+                            var hourRes = Model.Reservations
+                                .Where(r => r.DataRozpoczęcia < hourEnd && r.DataZakończenia > hourStart)
+                                .OrderBy(r => r.DataRozpoczęcia)
+                                .ToList();
+                            <td style="min-width: 160px;">
+                                @if (!hourRes.Any())
+                                {
+                                    <span class="text-muted">wolne</span>
+                                }
+                                else
+                                {
+                                    var first = hourRes.First();
+                                    var statusClass = first.Status switch
+                                    {
+                                        Projekt4.Models.ReservationStatus.Pending => "badge bg-warning text-dark",
+                                        Projekt4.Models.ReservationStatus.Approved => "badge bg-success",
+                                        Projekt4.Models.ReservationStatus.Rejected => "badge bg-danger",
+                                        Projekt4.Models.ReservationStatus.Cancelled => "badge bg-secondary",
+                                        _ => "badge bg-secondary"
+                                    };
+                                    <div>
+                                        <span class="@statusClass">@first.Tytuł</span>
+                                        <div class="small text-muted">@first.DataRozpoczęcia.ToString("HH:mm") - @first.DataZakończenia.ToString("HH:mm") (@hourRes.Count)</div>
+                                    </div>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-muted small">Siatka pokazuje zajętość godzinową w zakresie 8–20.</div>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    @foreach (var day in days)
+                    {
+                        <th class="text-center">@DayLabel(day)</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    @foreach (var day in days)
+                    {
+                        var dayStart = day.Date;
+                        var dayEnd = dayStart.AddDays(1);
+                        var dayReservations = Model.Reservations
+                            .Where(r => r.DataRozpoczęcia < dayEnd && r.DataZakończenia > dayStart)
+                            .OrderBy(r => r.DataRozpoczęcia)
+                            .ToList();
+                        <td style="min-width: 180px;">
+                            @if (!dayReservations.Any())
+                            {
+                                <span class="text-muted">Brak rezerwacji</span>
+                            }
+                            else
+                            {
+                                <ul class="list-unstyled mb-0">
+                                    @foreach (var r in dayReservations)
+                                    {
+                                        var statusClass = r.Status switch
+                                        {
+                                            Projekt4.Models.ReservationStatus.Pending => "badge bg-warning text-dark",
+                                            Projekt4.Models.ReservationStatus.Approved => "badge bg-success",
+                                            Projekt4.Models.ReservationStatus.Rejected => "badge bg-danger",
+                                            Projekt4.Models.ReservationStatus.Cancelled => "badge bg-secondary",
+                                            _ => "badge bg-secondary"
+                                        };
+                                        <li class="mb-1">
+                                            <span class="@statusClass">@r.Tytuł</span>
+                                            <div class="small text-muted">@r.DataRozpoczęcia.ToString("HH:mm") - @r.DataZakończenia.ToString("HH:mm")</div>
+                                            <div class="small">@r.User?.Email</div>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </td>
+                    }
+                </tr>
+            </tbody>
+        </table>
+        <div class="text-muted small">Widok miesięczny pokazuje rezerwacje przypadające na każdy dzień.</div>
+    </div>
+}

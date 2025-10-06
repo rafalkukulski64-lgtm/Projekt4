@@ -41,6 +41,60 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
+        // GET: Room/Calendar/5
+        public async Task<IActionResult> Calendar(int? id, string? mode, DateTime? start)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var room = await _context.Rooms.FindAsync(id);
+            if (room == null)
+            {
+                return NotFound();
+            }
+
+            var viewMode = string.IsNullOrWhiteSpace(mode) ? "week" : mode.ToLowerInvariant();
+
+            DateTime baseDate = start?.Date ?? DateTime.Today;
+            DateTime rangeStart;
+            DateTime rangeEnd;
+
+            if (viewMode == "month")
+            {
+                rangeStart = new DateTime(baseDate.Year, baseDate.Month, 1);
+                rangeEnd = rangeStart.AddMonths(1).AddTicks(-1);
+            }
+            else
+            {
+                int diff = (7 + (baseDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+                rangeStart = baseDate.AddDays(-diff).Date;
+                rangeEnd = rangeStart.AddDays(7).AddTicks(-1);
+                viewMode = "week";
+            }
+
+            var reservations = await _context.Reservations
+                .Where(r => r.SalaId == id &&
+                            r.Status != ReservationStatus.Rejected &&
+                            r.Status != ReservationStatus.Cancelled &&
+                            r.DataRozpoczęcia < rangeEnd && r.DataZakończenia > rangeStart)
+                .OrderBy(r => r.DataRozpoczęcia)
+                .ToListAsync();
+
+            var vm = new Projekt4.Models.CalendarViewModel
+            {
+                Room = room,
+                StartDate = rangeStart,
+                EndDate = rangeEnd,
+                ViewMode = viewMode,
+                Reservations = reservations
+            };
+
+            ViewBag.BaseDate = baseDate.ToString("yyyy-MM-dd");
+            return View(vm);
+        }
+
         // GET: Room/Create
         public IActionResult Create()
         {
