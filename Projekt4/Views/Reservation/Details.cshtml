@@ -104,6 +104,54 @@
                         <dd class="col-sm-9">@Model.DataUtworzenia.ToString("dd.MM.yyyy HH:mm")</dd>
                     </dl>
                 }
+
+                <hr>
+                <h6>Załączniki</h6>
+                @if (Model.Attachments != null && Model.Attachments.Any())
+                {
+                    <ul class="list-group mb-3">
+                        @foreach (var att in Model.Attachments.OrderByDescending(a => a.UploadedAtUtc))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-paperclip"></i>
+                                    @att.OriginalFileName
+                                    <small class="text-muted">(@(att.FileSize/1024) KB, @att.UploadedAtUtc.ToLocalTime().ToString("g"))</small>
+                                </span>
+                                <span>
+                                    <a class="btn btn-sm btn-outline-primary" href="@Url.Action("DownloadAttachment", "Reservation", new { id = Model.Id, attachmentId = att.Id })">Pobierz</a>
+                                    @if (isManager || Model.UserId == User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value)
+                                    {
+                                        <form method="post" asp-action="DeleteAttachment" asp-controller="Reservation" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@Model.Id" />
+                                            <input type="hidden" name="attachmentId" value="@att.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Usunąć załącznik?');">Usuń</button>
+                                        </form>
+                                    }
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">Brak załączników.</p>
+                }
+
+                @if (isManager)
+                {
+                    <form asp-action="UploadAttachment" asp-controller="Reservation" method="post" enctype="multipart/form-data" id="uploadForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label for="fileInput" class="form-label">Dodaj załączniki</label>
+                            <input class="form-control" type="file" id="fileInput" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt" />
+                            <div class="form-text">Dozwolone: pdf, doc(x), xls(x), png, jpg, txt. Maks. 10MB każdy.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Wgraj</button>
+                    </form>
+                }
             </div>
         </div>
     </div>
@@ -188,6 +236,37 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function() {
+        const form = document.getElementById('uploadForm');
+        const input = document.getElementById('fileInput');
+        const maxSize = 10 * 1024 * 1024;
+        form?.addEventListener('submit', function(e) {
+            const files = input.files;
+            if (!files || files.length === 0) {
+                e.preventDefault();
+                alert('Wybierz co najmniej jeden plik.');
+                return;
+            }
+            const allowed = ['.pdf','.doc','.docx','.xls','.xlsx','.png','.jpg','.jpeg','.txt'];
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const ext = (f.name.split('.').pop() || '').toLowerCase();
+                if (f.size > maxSize) {
+                    e.preventDefault();
+                    alert('Plik ' + f.name + ' przekracza limit 10MB.');
+                    return;
+                }
+                if (!allowed.includes('.' + ext)) {
+                    e.preventDefault();
+                    alert('Typ pliku ' + f.name + ' nie jest dozwolony.');
+                    return;
+                }
+            }
+        });
+    })();
+</script>
 
 <!-- Cancel Modal -->
 <div class="modal fade" id="cancelModal" tabindex="-1">

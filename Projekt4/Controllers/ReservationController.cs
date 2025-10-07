@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +14,13 @@ namespace Projekt4.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly Projekt4.Services.IFileStorage _fileStorage;
 
-        public ReservationController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ReservationController(ApplicationDbContext context, UserManager<IdentityUser> userManager, Projekt4.Services.IFileStorage fileStorage)
         {
             _context = context;
             _userManager = userManager;
+            _fileStorage = fileStorage;
         }
 
         
@@ -59,16 +62,22 @@ namespace Projekt4.Controllers
             if (ModelState.IsValid)
             {
                 
-                var hasConflict = await _context.Reservations
+                var conflictQuery = _context.Reservations
                     .Where(r => r.SalaId == viewModel.SalaId &&
                                r.Status != ReservationStatus.Rejected &&
                                r.Status != ReservationStatus.Cancelled &&
-                               ((r.DataRozpoczęcia < viewModel.DataZakończenia && r.DataZakończenia > viewModel.DataRozpoczęcia)))
-                    .AnyAsync();
+                               (r.DataRozpoczęcia < viewModel.DataZakończenia && r.DataZakończenia > viewModel.DataRozpoczęcia));
+                var hasConflict = await conflictQuery.AnyAsync();
 
                 if (hasConflict)
                 {
-                    ModelState.AddModelError("", "W wybranym terminie sala jest już zarezerwowana. Wybierz inny termin.");
+                    var conflicts = await conflictQuery
+                        .OrderBy(r => r.DataRozpoczęcia)
+                        .Take(3)
+                        .ToListAsync();
+                    var details = string.Join("; ", conflicts.Select(c => $"{c.Tytuł} ({c.DataRozpoczęcia:dd.MM HH:mm}–{c.DataZakończenia:dd.MM HH:mm})"));
+                    var msg = "W wybranym terminie sala jest już zarezerwowana. " + (conflicts.Count > 0 ? $"Kolizje: {details}." : "Wybierz inny termin.");
+                    ModelState.AddModelError("", msg);
                     return View(viewModel);
                 }
 
@@ -129,6 +138,7 @@ namespace Projekt4.Controllers
             var reservation = await _context.Reservations
                 .Include(r => r.Room)
                 .Include(r => r.User)
+                .Include(r => r.Attachments)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (reservation == null)
@@ -233,7 +243,16 @@ namespace Projekt4.Controllers
 
                 if (hasConflict)
                 {
-                    TempData["ErrorMessage"] = "Zatwierdzenie nie jest możliwe – wykryto kolizję terminu.";
+                    var conflicts = await _context.Reservations
+                        .Where(r => r.SalaId == reservation.SalaId && r.Id != reservation.Id &&
+                                    r.Status != ReservationStatus.Rejected &&
+                                    r.Status != ReservationStatus.Cancelled &&
+                                    (r.DataRozpoczęcia < reservation.DataZakończenia && r.DataZakończenia > reservation.DataRozpoczęcia))
+                        .OrderBy(r => r.DataRozpoczęcia)
+                        .Take(3)
+                        .ToListAsync();
+                    var details = string.Join("; ", conflicts.Select(c => $"{c.Tytuł} ({c.DataRozpoczęcia:dd.MM HH:mm}–{c.DataZakończenia:dd.MM HH:mm})"));
+                    TempData["ErrorMessage"] = "Zatwierdzenie nie jest możliwe – wykryto kolizję terminu. " + (conflicts.Count > 0 ? $"Kolizje: {details}." : "");
                     await tx.RollbackAsync();
                     return RedirectToAction(nameof(Details), new { id });
                 }
@@ -309,17 +328,135 @@ namespace Projekt4.Controllers
         }
 
         
+        [HttpPost]
+        [Authorize(Roles = "Manager")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAttachment(int id, List<IFormFile> files)
+        {
+            var reservation = await _context.Reservations.Include(r => r.Attachments).FirstOrDefaultAsync(r => r.Id == id);
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (!User.IsInRole("Manager"))
+            {
+                return Forbid();
+            }
+
+            if (files == null || files.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Nie wybrano plików do wgrania.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            foreach (var file in files)
+            {
+                if (file.Length <= 0)
+                    continue;
+
+                
+                var (storedFileName, size) = await _fileStorage.SaveReservationAttachmentAsync(id, file);
+
+                var attachment = new Attachment
+                {
+                    ReservationId = id,
+                    OriginalFileName = file.FileName,
+                    StoredFileName = storedFileName,
+                    ContentType = file.ContentType,
+                    FileSize = size,
+                    UploadedAtUtc = DateTime.UtcNow,
+                    UploadedByUserId = userId ?? string.Empty
+                };
+
+                _context.Attachments.Add(attachment);
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Załączniki zostały wgrane.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadAttachment(int id, int attachmentId)
+        {
+            var reservation = await _context.Reservations.Include(r => r.Attachments).FirstOrDefaultAsync(r => r.Id == id);
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            var attachment = reservation.Attachments.FirstOrDefault(a => a.Id == attachmentId);
+            if (attachment == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var isManager = User.IsInRole("Manager");
+            if (!isManager && reservation.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            var path = _fileStorage.GetReservationAttachmentPath(id, attachment.StoredFileName);
+            if (!System.IO.File.Exists(path))
+            {
+                TempData["ErrorMessage"] = "Plik nie istnieje na serwerze.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            return File(stream, attachment.ContentType ?? "application/octet-stream", attachment.OriginalFileName);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAttachment(int id, int attachmentId)
+        {
+            var reservation = await _context.Reservations.Include(r => r.Attachments).FirstOrDefaultAsync(r => r.Id == id);
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            var isManager = User.IsInRole("Manager");
+            if (!isManager && reservation.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            var attachment = reservation.Attachments.FirstOrDefault(a => a.Id == attachmentId);
+            if (attachment == null)
+            {
+                return NotFound();
+            }
+
+            _context.Attachments.Remove(attachment);
+            await _context.SaveChangesAsync();
+            _fileStorage.DeleteReservationAttachment(id, attachment.StoredFileName);
+            TempData["SuccessMessage"] = "Załącznik został usunięty.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        
         [HttpGet]
         public async Task<IActionResult> CheckAvailability(int roomId, DateTime startDate, DateTime endDate)
         {
-            var hasConflict = await _context.Reservations
+            var conflicts = await _context.Reservations
                 .Where(r => r.SalaId == roomId &&
                            r.Status != ReservationStatus.Rejected &&
                            r.Status != ReservationStatus.Cancelled &&
-                           ((r.DataRozpoczęcia < endDate && r.DataZakończenia > startDate)))
-                .AnyAsync();
+                           (r.DataRozpoczęcia < endDate && r.DataZakończenia > startDate))
+                .OrderBy(r => r.DataRozpoczęcia)
+                .Select(r => new { start = r.DataRozpoczęcia, end = r.DataZakończenia })
+                .Take(5)
+                .ToListAsync();
 
-            return Json(new { available = !hasConflict });
+            var hasConflict = conflicts.Any();
+            return Json(new { available = !hasConflict, conflicts });
         }
 
         

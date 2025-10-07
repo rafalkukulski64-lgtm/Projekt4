@@ -26,6 +26,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 // Add Razor Pages for Identity UI
 builder.Services.AddRazorPages();
 
+// File storage service
+builder.Services.AddSingleton<Projekt4.Services.IFileStorage, Projekt4.Services.FileStorage>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

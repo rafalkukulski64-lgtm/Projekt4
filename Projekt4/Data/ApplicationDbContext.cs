@@ -12,6 +12,7 @@ namespace Projekt4.Data
 
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<Attachment> Attachments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +51,23 @@ namespace Projekt4.Data
                 
                 entity.HasIndex(e => new { e.SalaId, e.DataRozpoczęcia, e.DataZakończenia });
                 entity.HasIndex(e => e.UserId);
+            });
+
+            // Configure Attachment entity
+            modelBuilder.Entity<Attachment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.OriginalFileName).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.StoredFileName).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ContentType).HasMaxLength(200);
+                entity.Property(e => e.UploadedByUserId).IsRequired();
+
+                entity.HasOne(a => a.Reservation)
+                      .WithMany(r => r.Attachments)
+                      .HasForeignKey(a => a.ReservationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(a => a.ReservationId);
             });
         }
     }

@@ -104,5 +104,8 @@ namespace Projekt4.Models
         
         [Column(TypeName = "decimal(18,2)")]
         public decimal Cena { get; set; }
+
+        
+        public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
     }
 }

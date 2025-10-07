@@ -144,9 +144,20 @@
                             `).show();
                             $('#submitBtn').prop('disabled', false);
                         } else {
+                            var list = '';
+                            if (data.conflicts && data.conflicts.length) {
+                                list = '<ul class="mb-0">' + data.conflicts.map(function(c) {
+                                    var s = new Date(c.start);
+                                    var e = new Date(c.end);
+                                    var sStr = s.toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                    var eStr = e.toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                    return `<li>Od ${sStr} do ${eStr}</li>`;
+                                }).join('') + '</ul>';
+                            }
                             $('#availabilityResult').html(`
                                 <div class="alert alert-danger">
-                                    <i class="fas fa-exclamation-triangle"></i> Sala jest zajęta w wybranym terminie. Wybierz inny termin.
+                                    <i class="fas fa-exclamation-triangle"></i> Sala jest zajęta w wybranym terminie.
+                                    ${list}
                                 </div>
                             `).show();
                             $('#submitBtn').prop('disabled', true);
