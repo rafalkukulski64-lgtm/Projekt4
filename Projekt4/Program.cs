@@ -29,6 +29,14 @@ builder.Services.AddRazorPages();
 // File storage service
 builder.Services.AddSingleton<Projekt4.Services.IFileStorage, Projekt4.Services.FileStorage>();
 
+// Options for cleanup service
+builder.Services.Configure<Projekt4.Services.ReservationCleanupOptions>(
+    builder.Configuration.GetSection("ReservationCleanup")
+);
+
+// Hosted service for auto-cancelling old pending reservations
+builder.Services.AddHostedService<Projekt4.Services.PendingReservationCleanupService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

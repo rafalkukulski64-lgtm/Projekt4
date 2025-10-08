@@ -465,7 +465,9 @@ namespace Projekt4.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var reservation = await _context.Reservations.FindAsync(id);
+            var reservation = await _context.Reservations
+                .Include(r => r.Attachments)
+                .FirstOrDefaultAsync(r => r.Id == id);
             if (reservation == null)
             {
                 return NotFound();
@@ -481,9 +483,9 @@ namespace Projekt4.Controllers
             }
 
             
-            if (reservation.Status != ReservationStatus.Cancelled)
+            if (reservation.Status != ReservationStatus.Cancelled && reservation.Status != ReservationStatus.Rejected)
             {
-                TempData["ErrorMessage"] = "Usuwanie możliwe tylko dla rezerwacji w statusie Anulowana.";
+                TempData["ErrorMessage"] = "Usuwanie możliwe tylko dla rezerwacji w statusie Anulowana lub Odrzucona.";
                 if (isManager)
                 {
                     return RedirectToAction(nameof(Details), new { id });
@@ -492,6 +494,14 @@ namespace Projekt4.Controllers
                 {
                     return RedirectToAction(nameof(MyReservations));
                 }
+            }
+
+            
+            foreach (var attachment in reservation.Attachments.ToList())
+            {
+                _context.Attachments.Remove(attachment);
+                await _context.SaveChangesAsync();
+                _fileStorage.DeleteReservationAttachment(id, attachment.StoredFileName);
             }
 
             _context.Reservations.Remove(reservation);

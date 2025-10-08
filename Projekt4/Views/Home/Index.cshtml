@@ -5,3 +5,21 @@
 <div class="text-center">
     <h1 class="display-4">System Rezerwacji Sal</h1>
 </div>
+
+
+
+@if ((ViewBag.IsManager ?? false) && (ViewBag.PendingReminderCount ?? 0) > 0)
+{
+    <div class="alert alert-warning mt-3">
+        <strong>Przypomnienie:</strong>
+        @if ((ViewBag.PendingReminderSeconds ?? 0) > 0)
+        {
+            <span>Masz oczekujące rezerwacje sprzed @ViewBag.PendingReminderSeconds sekund.</span>
+        }
+        else
+        {
+            <span>Masz oczekujące rezerwacje sprzed @ViewBag.PendingReminderDays dni.</span>
+        }
+        (<strong>@ViewBag.PendingReminderCount</strong> pozycji) Rozważ ich aktualizację lub anulowanie.
+    </div>
+}

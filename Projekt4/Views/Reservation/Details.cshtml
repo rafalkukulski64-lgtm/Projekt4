@@ -206,10 +206,13 @@
             </div>
             <div class="card-body">
                 <div class="timeline">
-                    <div class="timeline-item @(Model.Status >= Projekt4.Models.ReservationStatus.Pending ? "active" : "")">
-                        <i class="fas fa-clock"></i>
-                        <span>Oczekująca</span>
-                    </div>
+                    @if (Model.Status == Projekt4.Models.ReservationStatus.Pending)
+                    {
+                        <div class="timeline-item active">
+                            <i class="fas fa-clock"></i>
+                            <span>Oczekująca</span>
+                        </div>
+                    }
                     @if (Model.Status == Projekt4.Models.ReservationStatus.Approved)
                     {
                         <div class="timeline-item active">
