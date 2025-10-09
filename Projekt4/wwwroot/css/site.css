@@ -61,13 +61,13 @@ a {
 
 
 .navbar.bg-dark {
-  background-color: #1f2937 !important; 
+  background-color: darkslategray !important; 
 }
 .navbar.bg-dark .navbar-brand,
 .navbar.bg-dark .nav-link,
-.navbar.bg-dark .dropdown-toggle { color: #e5e7eb !important; }
+.navbar.bg-dark .dropdown-toggle { color: whitesmoke !important; }
 .navbar.bg-dark .nav-link:hover,
-.navbar.bg-dark .dropdown-item:hover { color: #ffffff !important; }
+.navbar.bg-dark .dropdown-item:hover { color: white !important; }
 
 
 button.accept-policy {
