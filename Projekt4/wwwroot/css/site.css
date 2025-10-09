@@ -21,56 +21,6 @@ body {
   margin-bottom: 60px;
 }
 
-
-input[type="datetime-local"]::-webkit-datetime-edit-second-field,
-input[type="datetime-local"]::-webkit-datetime-edit-millisecond-field {
-  display: none !important;
-  visibility: hidden !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-
-input[type="datetime-local"]::-webkit-calendar-picker-indicator ~ *::-webkit-datetime-edit-second-field,
-input[type="datetime-local"]::-webkit-inner-spin-button ~ *::-webkit-datetime-edit-second-field {
-  display: none !important;
-}
-
-
-input[type="datetime-local"]::-webkit-datetime-edit-text {
-  color: transparent;
-}
-
-input[type="datetime-local"]::-webkit-datetime-edit-month-field,
-input[type="datetime-local"]::-webkit-datetime-edit-day-field,
-input[type="datetime-local"]::-webkit-datetime-edit-year-field,
-input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
-input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
-  color: black;
-}
-
-input[type="datetime-local"] {
-  position: relative;
-}
-
-
-@-moz-document url-prefix() {
-  input[type="datetime-local"] {
-    width: 200px;
-  }
-}
-
-
-::-webkit-datetime-edit-second-field {
-  display: none !important;
-}
-
-::-webkit-datetime-edit-millisecond-field {
-  display: none !important;
-}
-
-
-
 a.navbar-brand {
   white-space: normal;
   text-align: center;
@@ -108,6 +58,16 @@ a {
 .box-shadow {
   box-shadow: 0 .25rem .75rem black;
 }
+
+
+.navbar.bg-dark {
+  background-color: #1f2937 !important; 
+}
+.navbar.bg-dark .navbar-brand,
+.navbar.bg-dark .nav-link,
+.navbar.bg-dark .dropdown-toggle { color: #e5e7eb !important; }
+.navbar.bg-dark .nav-link:hover,
+.navbar.bg-dark .dropdown-item:hover { color: #ffffff !important; }
 
 
 button.accept-policy {
