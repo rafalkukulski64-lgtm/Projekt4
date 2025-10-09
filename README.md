@@ -14,8 +14,6 @@
 3. `dotnet run` w folderze `Projekt4`
 4. Wejdź na `https://localhost:5001` lub `http://localhost:5000` (port może się różnić zgodnie z `launchSettings.json` lub parametrem `--urls`)
 
-### Uwaga dot. uruchamiania
-- Możesz wymusić adres/port: `dotnet run --no-build --urls http://localhost:5215`
 
 ## Role i konta testowe
 - Role: `User`, `Manager`
@@ -31,12 +29,6 @@
 - Bootstrap podłączony w `_Layout.cshtml`
 - Ogólne style i nadpisania: `wwwroot/css/site.css`
 - Uploady plików: `wwwroot/uploads`
-
-## Ostatnie zmiany
-- Usunięto komentarze `//` z kontrolerów, modeli i widoków Razor.
-- Uporządkowano `site.css`: usunięto komentarze blokowe na życzenie.
-- Zamieniono kody kolorów `hex`/`rgba` na nazwy kolorów (np. `royalblue`, `dodgerblue`, `white`, `gainsboro`, `black`).
-- Podgląd UI został zweryfikowany po zmianach, bez regresji wizualnych.
 
 ## Podstawowe scenariusze
 - Tworzenie pokoju i edycja parametrów
