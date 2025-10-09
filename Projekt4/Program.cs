@@ -67,6 +67,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     await RoleSeeder.SeedRolesAsync(services);
     await RoleSeeder.SeedManagerAccountAsync(services);
+    await RoleSeeder.SeedDefaultUserAsync(services);
 }
 
 app.Run();

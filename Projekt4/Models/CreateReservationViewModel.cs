@@ -28,10 +28,8 @@ namespace Projekt4.Models
         [DataType(DataType.MultilineText)]
         public string? Notatki { get; set; }
 
-        // Lista sal do wyboru
         public List<Room> AvailableRooms { get; set; } = new List<Room>();
 
-        // Informacje o wybranej sali
         public Room? SelectedRoom { get; set; }
     }
 }

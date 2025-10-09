@@ -219,12 +219,10 @@ else
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Auto-submit form when filters change
             $('#roomId, #status').change(function() {
                 $(this).closest('form').submit();
             });
             
-            // Set current values for select elements
             $('#roomId').val('@ViewBag.CurrentRoomId');
             $('#status').val('@ViewBag.CurrentStatus');
             $('#title').val('@ViewBag.CurrentTitle');

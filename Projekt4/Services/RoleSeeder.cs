@@ -44,5 +44,30 @@ namespace Projekt4.Services
                 }
             }
         }
+
+        public static async Task SeedDefaultUserAsync(IServiceProvider serviceProvider)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+            string userEmail = "user@test.pl";
+            string userPassword = "User123!";
+
+            var user = await userManager.FindByEmailAsync(userEmail);
+            if (user == null)
+            {
+                user = new IdentityUser
+                {
+                    UserName = userEmail,
+                    Email = userEmail,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(user, userPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "User");
+                }
+            }
+        }
     }
 }

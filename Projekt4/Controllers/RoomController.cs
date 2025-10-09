@@ -16,13 +16,11 @@ namespace Projekt4.Controllers
             _context = context;
         }
 
-        // GET: Room
         public async Task<IActionResult> Index()
         {
             return View(await _context.Rooms.ToListAsync());
         }
 
-        // GET: Room/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -41,7 +39,6 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
-        // GET: Room/Calendar/5
         public async Task<IActionResult> Calendar(int? id, string? mode, DateTime? start)
         {
             if (id == null)
@@ -95,20 +92,17 @@ namespace Projekt4.Controllers
             return View(vm);
         }
 
-        // GET: Room/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Room/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nazwa,Pojemność,Lokalizacja,Wyposażenie,CzyAktywna")] Room room)
         {
             if (ModelState.IsValid)
             {
-                // Check for unique name within location
                 var existingRoom = await _context.Rooms
                     .FirstOrDefaultAsync(r => r.Nazwa == room.Nazwa && r.Lokalizacja == room.Lokalizacja);
                 
@@ -125,7 +119,6 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
-        // GET: Room/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -141,7 +134,6 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
-        // POST: Room/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nazwa,Pojemność,Lokalizacja,Wyposażenie,CzyAktywna")] Room room)
@@ -183,7 +175,6 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
-        // GET: Room/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -201,7 +192,6 @@ namespace Projekt4.Controllers
             return View(room);
         }
 
-        // POST: Room/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

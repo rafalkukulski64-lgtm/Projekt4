@@ -40,11 +40,49 @@
 }
 else
 {
+    <!-- Panel filtrów -->
+    <div class="card mb-3 reservation-filters">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label" for="filterTitle"><i class="fas fa-search me-1"></i> Szukaj</label>
+                    <input type="text" id="filterTitle" class="form-control" placeholder="Tytuł lub notatki..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="filterStatus"><i class="fas fa-flag me-1"></i> Status</label>
+                    <select id="filterStatus" class="form-select">
+                        <option value="">Wszystkie</option>
+                        <option value="Pending">Oczekująca</option>
+                        <option value="Approved">Zatwierdzona</option>
+                        <option value="Rejected">Odrzucona</option>
+                        <option value="Cancelled">Anulowana</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="filterRoom"><i class="fas fa-door-open me-1"></i> Sala</label>
+                    <select id="filterRoom" class="form-select">
+                        <option value="">Wszystkie</option>
+                        @foreach (var room in Model.Select(m => m.Room.Nazwa).Distinct())
+                        {
+                            <option value="@room">@room</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="text-muted">
+            <i class="fas fa-list me-1"></i> Wyniki: <span id="resultCount">@Model.Count()</span>
+        </div>
+    </div>
+
     <div class="row">
         @foreach (var item in Model)
         {
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100">
+            <div class="col-md-6 col-lg-4 mb-4 reservation-item" data-status="@item.Status" data-room="@item.Room.Nazwa" data-title="@item.Tytuł" data-notes="@item.Notatki">
+                <div class="card h-100 reservation-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">@Html.DisplayFor(modelItem => item.Tytuł)</h6>
                         <span class="badge @GetStatusBadgeClass(item.Status)">
@@ -61,13 +99,13 @@ else
                         
                         @if (!string.IsNullOrEmpty(item.Notatki))
                         {
-                            <p class="card-text">
+                            <p class="card-text text-truncate-2">
                                 <strong>Notatki:</strong> @Html.DisplayFor(modelItem => item.Notatki)
                             </p>
                         }
                     </div>
                     <div class="card-footer">
-                        <div class="btn-group w-100" role="group">
+                        <div class="btn-group w-100 reservation-actions" role="group">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-eye"></i> Szczegóły
                             </a>
@@ -141,4 +179,45 @@ else
             _ => "bg-secondary"
         };
     }
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            function applyFilters() {
+                var status = document.getElementById('filterStatus').value;
+                var room = document.getElementById('filterRoom').value;
+                var q = (document.getElementById('filterTitle').value || '').toLowerCase();
+
+                var items = document.querySelectorAll('.reservation-item');
+                var visibleCount = 0;
+                items.forEach(function (el) {
+                    var s = (el.getAttribute('data-status') || '').trim();
+                    var r = (el.getAttribute('data-room') || '').trim();
+                    var title = (el.getAttribute('data-title') || '').toLowerCase();
+                    var notes = (el.getAttribute('data-notes') || '').toLowerCase();
+
+                    var ok = true;
+                    if (status && s !== status) ok = false;
+                    if (room && r !== room) ok = false;
+                    if (q && title.indexOf(q) === -1 && notes.indexOf(q) === -1) ok = false;
+
+                    el.style.display = ok ? '' : 'none';
+                    if (ok) visibleCount++;
+                });
+
+                var counter = document.getElementById('resultCount');
+                if (counter) counter.textContent = visibleCount;
+            }
+
+            var statusEl = document.getElementById('filterStatus');
+            var roomEl = document.getElementById('filterRoom');
+            var titleEl = document.getElementById('filterTitle');
+            if (statusEl) statusEl.addEventListener('change', applyFilters);
+            if (roomEl) roomEl.addEventListener('change', applyFilters);
+            if (titleEl) titleEl.addEventListener('input', applyFilters);
+
+            document.addEventListener('DOMContentLoaded', applyFilters);
+        })();
+    </script>
 }
